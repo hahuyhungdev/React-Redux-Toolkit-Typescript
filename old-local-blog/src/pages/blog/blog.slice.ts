@@ -1,18 +1,57 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { createSlice, PayloadAction, createAsyncThunk, AsyncThunk } from '@reduxjs/toolkit'
 
 import { nanoid } from 'nanoid'
 
-import { initalPostList } from 'constants/blog'
 import { Post } from 'types/blog.type'
+import http from 'utils/hptt'
 
 interface BlogState {
   postList: Post[]
   editingPost: Post | null
+  loading: boolean
+  currentPostId: string | undefined
 }
 const initialState: BlogState = {
-  postList: initalPostList,
-  editingPost: null
+  postList: [],
+  editingPost: null,
+  loading: false,
+  currentPostId: undefined
 }
+
+type GenericAsyncThunk = AsyncThunk<unknown, unknown, any>
+
+type PendingAction = ReturnType<GenericAsyncThunk['pending']>
+type RejectedAction = ReturnType<GenericAsyncThunk['rejected']>
+type FulfilledAction = ReturnType<GenericAsyncThunk['fulfilled']>
+
+export const getPostList = createAsyncThunk('blog/getPostList', async (_, thunkAPI) => {
+  const response = await http.get<Post[]>('posts', {
+    signal: thunkAPI.signal
+  })
+  return response.data
+})
+// addPost
+export const addPost = createAsyncThunk('blog/addPost', async (post: Post, thunkAPI) => {
+  const response = await http.post<Post>('posts', post, {
+    signal: thunkAPI.signal
+  })
+  return response.data
+})
+// finishEditingPost
+export const finishEditingPost = createAsyncThunk('blog/finishEditingPost', async (post: Post, thunkAPI) => {
+  const response = await http.put<Post>(`posts/${post.id}`, post, {
+    signal: thunkAPI.signal
+  })
+  return response.data
+})
+// deletePost
+export const deletePost = createAsyncThunk('blog/deletePost', async (postId: string, thunkAPI) => {
+  await http.delete(`posts/${postId}`, {
+    signal: thunkAPI.signal
+  })
+  return postId
+})
+
 const blogSlice = createSlice({
   name: 'blog',
   initialState,
@@ -64,7 +103,49 @@ const blogSlice = createSlice({
         return false
       })
     }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(getPostList.fulfilled, (state, action) => {
+        state.postList = action.payload
+      })
+      .addCase(addPost.fulfilled, (state, action) => {
+        state.postList.push(action.payload)
+      })
+      .addCase(finishEditingPost.fulfilled, (state, action) => {
+        const postId = action.payload.id
+        state.postList.some((post, index) => {
+          if (post.id === postId) {
+            state.postList[index] = action.payload
+            return true
+          }
+          return false
+        })
+      })
+      .addCase(deletePost.fulfilled, (state, action) => {
+        const postId = action.payload
+        const foundPostIndex = state.postList.findIndex((post) => post.id === postId)
+        if (foundPostIndex !== -1) {
+          state.postList.splice(foundPostIndex, 1)
+        }
+      })
+      .addMatcher<PendingAction>(
+        (action) => action.type.endsWith('/pending'),
+        (state, action) => {
+          state.loading = true
+          state.currentPostId = action.meta.requestId
+        }
+      )
+      .addMatcher<RejectedAction | FulfilledAction>(
+        (action) => action.type.endsWith('/rejected') || action.type.endsWith('/fulfilled'),
+        (state, action) => {
+          if (state.loading && state.currentPostId === action.meta.requestId) {
+            state.loading = false
+            state.currentPostId = undefined
+          }
+        }
+      )
   }
 })
-export const { addPost, deletePost, startEditingPost, cancelEditingPost, finishEditingPost } = blogSlice.actions
+export const { startEditingPost, cancelEditingPost } = blogSlice.actions
 export default blogSlice.reducer
