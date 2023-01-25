@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState } from 'react'
 import { Post } from 'types/blog.type'
 import { useDispatch, useSelector } from 'react-redux'
-import { addPost, cancelEditingPost, finishEditingPost } from 'pages/blog/blog.reducer'
+import { addPost, cancelEditingPost, finishEditingPost } from 'pages/blog/blog.slice'
 import { RootState } from 'store'
 const initialState: Post = {
   description: '',
@@ -27,6 +27,7 @@ export default function CreatePost() {
       dispatch(finishEditingPost(formData))
     } else {
       const formDataWithId = { ...formData }
+
       dispatch(addPost(formDataWithId))
     }
     setFormData(initialState)
