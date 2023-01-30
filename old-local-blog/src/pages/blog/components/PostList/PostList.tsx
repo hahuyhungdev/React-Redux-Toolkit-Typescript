@@ -4,7 +4,8 @@ import { RootState } from 'store'
 import { deletePost, startEditingPost } from 'pages/blog/blog.reducer'
 
 export default function PostList() {
-  const postList = useSelector((state: RootState) => state.blog.postList)
+  const { postList } = useSelector((state: RootState) => state.blog)
+
   const dispatch = useDispatch()
   const handleDelete = (postId: string) => {
     dispatch(deletePost(postId))
@@ -22,9 +23,18 @@ export default function PostList() {
           </p>
         </div>
         <div className='grid gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-2 xl:grid-cols-2 xl:gap-8'>
-          {postList.map((post) => (
-            <PostItem post={post} key={post.id} handleDelete={handleDelete} handleStartEditing={handleStartEditing} />
-          ))}
+          {postList.map(
+            (post) =>
+              // if published is true, show the post
+              post.published && (
+                <PostItem
+                  key={post.id}
+                  post={post}
+                  handleDelete={handleDelete}
+                  handleStartEditing={handleStartEditing}
+                />
+              )
+          )}
         </div>
       </div>
     </div>
