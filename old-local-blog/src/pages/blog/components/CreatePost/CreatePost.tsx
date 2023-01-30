@@ -1,8 +1,8 @@
+import { addPost, cancelEditingPost, finishEditingPost } from 'pages/blog/blog.slice'
 import { Fragment, useEffect, useState } from 'react'
+import { useSelector } from 'react-redux'
+import { RootState, useAppDispatch } from 'store'
 import { Post } from 'types/blog.type'
-import { useDispatch, useSelector } from 'react-redux'
-import { addPost, cancelEditingPost, finishEditingPost } from 'pages/blog/blog.reducer'
-import { RootState } from 'store'
 const initialState: Post = {
   description: '',
   featuredImage: '',
@@ -15,7 +15,7 @@ const initialState: Post = {
 export default function CreatePost() {
   const [formData, setFormData] = useState<Post>(initialState)
   const editingPost = useSelector((state: RootState) => state.blog.editingPost)
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
 
   useEffect(() => {
     setFormData(editingPost || initialState)
@@ -27,6 +27,7 @@ export default function CreatePost() {
       dispatch(finishEditingPost(formData))
     } else {
       const formDataWithId = { ...formData }
+
       dispatch(addPost(formDataWithId))
     }
     setFormData(initialState)

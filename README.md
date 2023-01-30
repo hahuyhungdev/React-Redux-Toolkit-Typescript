@@ -2,7 +2,7 @@
 
 ## Tác giả
 
-Dư Thanh Được
+Dư Thanh Được Dev
 
 - Website: [duthanhduoc.com](https://duthanhduoc.com)
 - Youtube: [Được Dev](https://www.youtube.com/channel/UCPTXoUNn3frLh8_jI1gAsBA)
